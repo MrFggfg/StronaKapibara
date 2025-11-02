@@ -70,6 +70,18 @@ input, textarea {
   display:inline-block; padding:10px 20px;
   background:#5865F2; color:white; border:none; border-radius:8px; cursor:pointer;
 }
+.btn-add {
+  background:#5865F2;
+  color:white;
+  padding:8px 16px;
+  border-radius:8px;
+  text-decoration:none;
+  transition:0.2s;
+}
+.btn-add:hover {
+  background:#4752c4;
+}
+
 </style>
 </head>
 <body>
