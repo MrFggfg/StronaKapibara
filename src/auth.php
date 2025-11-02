@@ -1,45 +1,93 @@
 <?php
+// src/auth.php
 require_once __DIR__ . '/db.php';
-require_once __DIR__ . '/models/User.php';
 
+session_set_cookie_params([
+    'lifetime' => 0,               // sesja wygasa po zamknięciu przeglądarki
+    'path' => '/',
+    'domain' => '',                // zostaw puste, działa lokalnie
+    'secure' => isset($_SERVER['HTTPS']), // true tylko jeśli HTTPS
+    'httponly' => true,            // zapobiega odczytaniu ciasteczka przez JS
+    'samesite' => 'Lax'            // ochrona przed CSRF przez linki z zewnątrz
+]);
 session_start();
 
-function register(string $name, string $email, string $password) {
-    $pdo = get_db();
-    // basic validation
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) return 'Niepoprawny email';
-    if (strlen($password) < 6) return 'Hasło musi mieć co najmniej 6 znaków';
 
-    // check exists
-    $u = User::findByEmail($email);
-    if ($u) return 'Użytkownik o tym emailu już istnieje';
+function registerUser($username, $email, $password) {
+    $db = getDB();
 
+    // Sprawdź czy użytkownik istnieje
+    $stmt = $db->prepare("SELECT id FROM users WHERE username = :u OR email = :e");
+    $stmt->execute([':u' => $username, ':e' => $email]);
+
+    if ($stmt->fetch()) {
+        return "Użytkownik o takiej nazwie lub e-mailu już istnieje.";
+    }
+
+    // Hashowanie hasła
     $hash = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)');
-    $stmt->execute([$name, $email, $hash]);
+
+    $stmt = $db->prepare("INSERT INTO users (username, email, password_hash) VALUES (:u, :e, :p)");
+    $stmt->execute([':u' => $username, ':e' => $email, ':p' => $hash]);
+
     return true;
 }
 
-function login(string $email, string $password): bool {
-    $u = User::findByEmail($email);
-    if (!$u) return false;
-    if (password_verify($password, $u['password_hash'])) {
-        $_SESSION['user_id'] = $u['id'];
+function loginUser($username, $password) {
+    $db = getDB();
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE username = :u");
+    $stmt->execute([':u' => $username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user && password_verify($password, $user['password_hash'])) {
+        session_regenerate_id(true); // nowy identyfikator po zalogowaniu
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['last_activity'] = time();
         return true;
     }
+
     return false;
 }
 
-function current_user() {
-    if (!empty($_SESSION['user_id'])) {
-        return User::findById($_SESSION['user_id']);
+function requireLogin() {
+    if (!isset($_SESSION['user_id'])) {
+        header("Location: login.php");
+        exit();
     }
-    return null;
+
+    // automatyczne wylogowanie po 30 minutach bezczynności
+    if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) {
+        logoutUser();
+        header("Location: login.php?timeout=1");
+        exit();
+    }
+
+    $_SESSION['last_activity'] = time();
 }
 
-function require_auth() {
-    if (empty($_SESSION['user_id'])) {
-        header('Location: /pages/login.php');
-        exit;
+function logoutUser() {
+    $_SESSION = [];
+    if (ini_get("session.use_cookies")) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', time() - 42000,
+            $params["path"], $params["domain"],
+            $params["secure"], $params["httponly"]
+        );
     }
+    session_destroy();
+}
+
+
+
+function generateCsrfToken() {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrfToken($token) {
+    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }

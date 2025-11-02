@@ -1,38 +1,22 @@
 <?php
-require_once __DIR__ . '/../../src/config.php';
-require_once __DIR__ . '/../../src/db.php';
+require_once __DIR__ . '/../../src/auth.php';
+requireLogin();
 
-// Simple gallery listing files from uploads
-$uploadsDir = __DIR__ . '/../uploads';
-$images = [];
-if (is_dir($uploadsDir)) {
-    $files = scandir($uploadsDir);
-    foreach ($files as $f) {
-        if (in_array($f, ['.','..'])) continue;
-        if (preg_match('/\.(jpe?g|png|gif)$/i', $f)) {
-            $images[] = '/uploads/' . $f;
-        }
-    }
+$db = getDB();
+$stmt = $db->prepare("SELECT role, email FROM users WHERE id = :id");
+$stmt->execute([':id' => $_SESSION['user_id']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$user) {
+    echo "Nie znaleziono użytkownika.";
+    exit;
 }
-?>
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Galeria - CapyWorld</title>
-  <link rel="stylesheet" href="/assets/css/styles.css">
-</head>
-<body>
-  <div class="header">CapyWorld — Galeria</div>
-  <div class="container">
-    <p><a href="register.php">Rejestracja</a> · <a href="login.php">Logowanie</a></p>
-    <div class="gallery">
-      <?php foreach ($images as $img): ?>
-        <div class="card"><img src="<?= htmlspecialchars($img) ?>" alt="photo"></div>
-      <?php endforeach; ?>
-      <?php if (empty($images)) echo '<p>Brak zdjęć. Prześlij pierwsze!</p>'; ?>
-    </div>
-  </div>
-  <script src="/assets/js/main.js"></script>
-</body>
-</html>
+
+$_SESSION['role'] = $user['role']; // zapamiętaj rolę w sesji
+$_SESSION['email'] = $user['email'];
+
+if ($user['role'] === 'admin') {
+    include 'dashboard_admin.php';
+} else {
+    include 'dashboard_user.php';
+}

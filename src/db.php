@@ -1,23 +1,22 @@
 <?php
-$config = require __DIR__ . '/config.php';
-$db = $config['db'];
+// src/db.php
 
-$dsn = sprintf('mysql:host=%s;port=%d;dbname=%s;charset=%s', $db['host'], $db['port'], $db['dbname'], $db['charset']);
+function getDB() {
+    static $db = null;
 
-try {
-    $pdo = new PDO($dsn, $db['user'], $db['pass'], [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-    ]);
-} catch (PDOException $e) {
-    // For development show a simple message
-    http_response_code(500);
-    echo 'DB connection error: ' . htmlspecialchars($e->getMessage());
-    exit;
-}
+    if ($db === null) {
+        $config = include __DIR__ . '/config.php';
+        try {
+            $db = new PDO(
+                "mysql:host={$config['db_host']};dbname={$config['db_name']};charset=utf8mb4",
+                $config['db_user'],
+                $config['db_pass'],
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+        } catch (PDOException $e) {
+            die("Błąd połączenia z bazą: " . $e->getMessage());
+        }
+    }
 
-// Convenience function
-function get_db(): PDO {
-    global $pdo;
-    return $pdo;
+    return $db;
 }
