@@ -43,20 +43,8 @@ th { background:#5865F2; color:white; }
 </head>
 <body>
 
-<!-- 🔹 Pasek nawigacji -->
-<div class="navbar">
-  <div class="logo">🐹 CapyWorld</div>
-  <div class="links">
-    <a href="../index.php">Strona główna</a>
-    <a href="gallery.php">Galeria</a>
-    <a href="upload_photo.php">Dodaj zdjęcie</a>
-    <a href="slider_user.php">Slider</a>
-    <?php if ($_SESSION['role'] === 'admin'): ?>
-      <a href="slider_admin.php">Panel slidera</a>
-    <?php endif; ?>
-    <a href="../../src/logout.php">Wyloguj</a>
-  </div>
-</div>
+<?php include '../includes/navbar.php'; ?>
+
 
 <!-- 🔹 Zawartość panelu -->
 <div class="container">

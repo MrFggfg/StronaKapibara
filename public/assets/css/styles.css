@@ -173,3 +173,39 @@ body{
   border-left-color: #2d9;
   color: #060;
 }
+.navbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#5865F2;
+  padding:12px 40px;
+  color:white;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
+}
+
+.navbar .logo {
+  font-weight:bold;
+  font-size:1.2em;
+}
+
+.navbar a {
+  color:white;
+  text-decoration:none;
+  margin-left:20px;
+  transition:0.2s;
+  font-weight:500;
+  padding:6px 10px;
+  border-radius:8px;
+}
+
+.navbar a:hover {
+  background:rgba(255,255,255,0.2);
+}
+
+.navbar a.active {
+  background:white;
+  color:#5865F2;
+  font-weight:bold;
+  box-shadow:0 0 5px rgba(255,255,255,0.5);
+}
+

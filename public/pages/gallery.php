@@ -141,18 +141,8 @@ body { font-family: Arial; background:#fafafa; margin:0; }
 </head>
 <body>
 
-<div class="navbar">
-  <div class="logo">🐹 CapyWorld</div>
-  <div class="links">
-    <a href="../index.php">Strona główna</a>
-    <a href="gallery.php">Galeria</a>
-    <a href="upload_photo.php">Dodaj zdjęcie</a>
-    <?php if ($_SESSION['role'] === 'admin'): ?>
-      <a href="slider_admin.php">Panel slidera</a>
-    <?php endif; ?>
-    <a href="../../src/logout.php">Wyloguj</a>
-  </div>
-</div>
+<?php include '../includes/navbar.php'; ?>
+
 
 
   <!-- 🔹 SLIDER -->

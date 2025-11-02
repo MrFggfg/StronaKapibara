@@ -45,17 +45,8 @@ h2 { color: #333; }
 </head>
 <body>
 
-  <!-- 🔹 Pasek nawigacji -->
-  <div class="navbar">
-    <div class="logo"> CapyWorld</div>
-    <div class="links">
-      <a href="../index.php">Strona główna</a>
-      <a href="gallery.php">Galeria</a>
-      <a href="upload_photo.php">Dodaj zdjęcie</a>
-      <a href="posts.php">Posty</a>
-      <a href="../../src/logout.php">Wyloguj</a>
-    </div>
-  </div>
+<?php include '../includes/navbar.php'; ?>
+
 
   <!-- 🔹 Zawartość strony -->
   <div class="container">

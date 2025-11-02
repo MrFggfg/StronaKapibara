@@ -87,3 +87,5 @@ CREATE INDEX idx_post_user_id ON posts(user_id);
 CREATE INDEX idx_comment_post_id ON comments(post_id);
 CREATE INDEX idx_comment_photo_id ON comments(photo_id);
 ALTER TABLE photos ADD COLUMN in_slider TINYINT(1) DEFAULT 0;
+ALTER TABLE photos ADD COLUMN slider_order INT DEFAULT 0;
+ALTER TABLE products ADD COLUMN image VARCHAR(255) DEFAULT NULL;
