@@ -89,3 +89,4 @@ CREATE INDEX idx_comment_photo_id ON comments(photo_id);
 ALTER TABLE photos ADD COLUMN in_slider TINYINT(1) DEFAULT 0;
 ALTER TABLE photos ADD COLUMN slider_order INT DEFAULT 0;
 ALTER TABLE products ADD COLUMN image VARCHAR(255) DEFAULT NULL;
+ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL AFTER email;

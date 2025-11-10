@@ -15,28 +15,47 @@ if (isset($_POST['remove_id'])) {
     exit;
 }
 
-// 🔹 Złożenie zamówienia
 if (isset($_POST['checkout']) && !empty($_SESSION['cart'])) {
     $user_id = $_SESSION['user_id'];
+    $fullname = trim($_POST['fullname']);
+    $address = trim($_POST['address']);
+    $email = trim($_POST['email']);
+
     $total = 0;
     foreach ($_SESSION['cart'] as $item) {
         $total += $item['price'] * $item['quantity'];
     }
 
-    $stmt = $db->prepare("INSERT INTO orders (user_id, total, status) VALUES (?, ?, 'pending')");
+    // 🔹 Zapisz zamówienie
+    $stmt = $db->prepare("INSERT INTO orders (user_id, total, status, created_at) VALUES (?, ?, 'pending', NOW())");
     $stmt->execute([$user_id, $total]);
     $order_id = $db->lastInsertId();
 
-    // Zapisz pozycje zamówienia
+    // 🔹 Zapisz produkty
     $stmt = $db->prepare("INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)");
     foreach ($_SESSION['cart'] as $item) {
         $stmt->execute([$order_id, $item['id'], $item['quantity'], $item['price']]);
     }
 
-    // (tu dodamy email w następnym kroku)
+    // 🔹 Wyczyść koszyk
     $_SESSION['cart'] = [];
+
+    // 🔹 Wyślij potwierdzenie e-mail
+    $subject = "CapyWorld - potwierdzenie zamówienia #$order_id";
+    $message = "Dziękujemy za złożenie zamówienia w CapyWorld!\n\n".
+               "Numer zamówienia: #$order_id\n".
+               "Imię i nazwisko: $fullname\n".
+               "Adres: $address\n".
+               "Kwota: " . number_format($total, 2) . " zł\n\n".
+               "Status: Oczekuje na płatność 💸\n\n".
+               "Pozdrawiamy,\nZespół CapyWorld 🐹";
+
+    $headers = "From: CapyWorld <no-reply@capyworld.local>\r\nContent-Type: text/plain; charset=UTF-8\r\n";
+    @mail($email, $subject, $message, $headers);
+
     $message = "✅ Zamówienie zostało złożone! Sprawdź e-mail z potwierdzeniem.";
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -101,8 +120,31 @@ button:hover { background:#4752c4; }
         </tr>
         <?php endforeach; ?>
       </table>
-      <p class="total">Razem: <?= number_format($total, 2) ?> zł</p>
-      <button type="submit" name="checkout">💳 Złóż zamówienie</button>
+</table>
+<p class="total">Razem: <?= number_format($total, 2) ?> zł</p>
+
+<div style="margin-top:30px; background:#f9f9ff; padding:20px; border-radius:12px;">
+  <h3>📦 Dane wysyłki</h3>
+  <?php
+    // Pobierz dane użytkownika
+    $stmt = $db->prepare("SELECT email, address FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+  ?>
+  <form method="post">
+    <label>Imię i nazwisko:</label><br>
+    <input type="text" name="fullname" value="<?= htmlspecialchars($_SESSION['username']) ?>" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;"><br><br>
+
+    <label>Adres wysyłki:</label><br>
+    <textarea name="address" rows="3" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;"><?= htmlspecialchars($user['address'] ?? '') ?></textarea><br><br>
+
+    <label>Email kontaktowy:</label><br>
+    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? $_SESSION['email'] ?? '') ?>" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;"><br><br>
+
+    <button type="submit" name="checkout" style="background:#5865F2; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer;">✅ Potwierdź zamówienie</button>
+  </form>
+</div>
+
     </form>
   <?php endif; ?>
 </div>

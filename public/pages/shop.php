@@ -172,6 +172,51 @@ button:hover { background:#4752c4; }
 .delete-btn {
   background:#e74c3c; margin-left:5px;
 }
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card .info {
+  padding: 15px;
+}
+
+.card .price {
+  color: #5865F2;
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.delete-btn,
+.card button {
+  background: #5865F2;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 15px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.delete-btn:hover,
+.card button:hover {
+  background: #4752c4;
+}
+
 </style>
 </head>
 <body>
