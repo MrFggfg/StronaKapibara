@@ -12,6 +12,17 @@ $product = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$product) {
     die("❌ Produkt nie znaleziony");
 }
+// --- Zgłaszanie komentarza ---
+if (isset($_POST['report_comment'])) {
+    $comment_id = (int)$_POST['report_id'];
+    $stmt = $db->prepare("UPDATE comments SET reported = 1 WHERE id = ?");
+    $stmt->execute([$comment_id]);
+
+    $_SESSION['msg'] = "🔔 Komentarz został zgłoszony do moderatora.";
+    header("Location: product.php?id=" . $id);
+    exit;
+}
+
 // 🔹 Dodawanie odpowiedzi i komentarzy
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
     $comment = trim($_POST['comment']);
@@ -168,10 +179,23 @@ button:hover { background:#4752c4; }
     border: 1px solid #ccc;
 }
 
-.comment-box[reply] {
-    margin-left: 30px;
-    background: #ececec;
+.comment-box {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+
+    max-width: 600px;   /* ⬅️ USTAW SZEROKOŚĆ KOMENTARZA */
+    width: 100%;        /* ⬅️ Dostosowuje się do ekranu */
+    word-wrap: break-word;     /* ⬅️ Zawijanie słów */
+    overflow-wrap: break-word; /* ⬅️ Zawijanie bardzo długich słów */
 }
+@media (max-width: 600px) {
+  .comment-box {
+      max-width: 100%;
+  }
+}
+
 
 </style>
 </head>
@@ -213,7 +237,11 @@ button:hover { background:#4752c4; }
 
   </div>
 
-  
+  <?php if(isset($_SESSION['msg'])): ?>
+    <p style="color:green;"><b><?= $_SESSION['msg'] ?></b></p>
+    <?php unset($_SESSION['msg']); ?>
+<?php endif; ?>
+
 <h3>💬 Komentarze</h3>
 
 <?php if (isset($_SESSION['user_id'])): ?>
@@ -242,6 +270,12 @@ button:hover { background:#4752c4; }
                 <button name="vote_plus">👍</button>
                 <button name="vote_minus">👎</button>
             </form>
+            <!-- 🔺 Zgłoś komentarz -->
+<form method="post" style="display:inline;">
+    <input type="hidden" name="report_id" value="<?= $c['id'] ?>">
+    <button type="submit" name="report_comment" style="color:#e74c3c;">🚨 Zgłoś</button>
+</form>
+
             <span><b><?= $c['votes'] ?></b> punktów</span>
 
             <!-- 🔸 Odpowiedź -->

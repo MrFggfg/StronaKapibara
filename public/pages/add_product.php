@@ -2,8 +2,8 @@
 require_once __DIR__ . '/../../src/auth.php';
 requireLogin();
 
-if ($_SESSION['role'] !== 'admin') {
-    die("Brak dostępu");
+if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'moderator') {
+    die("❌ Brak dostępu");
 }
 
 $db = getDB();

@@ -24,7 +24,47 @@ if (isset($_POST['update_status'])) {
     header("Location: dashboard_admin.php");
     exit;
 }
+// Pobierz użytkowników
+$users = $db->query("SELECT id, username, email, role, created_at FROM users ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+// Obsługa zmiany roli
+if (isset($_POST['update_role'])) {
+    $user_id  = (int)$_POST['user_id'];
+    $new_role = $_POST['new_role'];
+
+    if (in_array($new_role, ['user','moderator'])) { // admina nie zmieniamy!
+        $stmt = $db->prepare("UPDATE users SET role = ? WHERE id = ?");
+        $stmt->execute([$new_role, $user_id]);
+    }
+    header("Location: dashboard_admin.php");
+    exit;
+}
+// Pobierz zgłoszone komentarze
+$stmt = $db->query("
+    SELECT c.id, c.content, c.created_at, u.username, p.name AS product_name
+    FROM comments c
+    JOIN users u ON c.user_id = u.id
+    JOIN products p ON c.product_id = p.id
+    WHERE c.reported = 1
+    ORDER BY c.created_at DESC
+");
+$reported_comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// 🗑 USUŃ KOMENTARZ
+if (isset($_POST['delete_comment'])) {
+    $id = (int)$_POST['comment_id'];
+    $db->prepare("DELETE FROM comments WHERE id = ?")->execute([$id]);
+    header("Location: dashboard_admin.php");
+    exit;
+}
+
+// 🧹 WYCZYŚC ZGŁOSZENIE
+if (isset($_POST['clear_report'])) {
+    $id = (int)$_POST['comment_id'];
+    $db->prepare("UPDATE comments SET reported = 0 WHERE id = ?")->execute([$id]);
+    header("Location: dashboard_admin.php");
+    exit;
+}
 
 ?>
 
@@ -61,6 +101,10 @@ th { background:#5865F2; color:white; }
   display:inline-block; margin-top:15px; padding:10px 20px;
   background:#e74c3c; color:white; border-radius:8px; text-decoration:none;
 }
+table { width: 100%; border-collapse: collapse; margin-top:20px; }
+table tr:nth-child(even) { background: #f8f8f8; }
+table th, table td { padding: 10px; border-bottom: 1px solid #ddd; }
+
 </style>
 </head>
 <body>
@@ -87,7 +131,7 @@ th { background:#5865F2; color:white; }
       <td><?= htmlspecialchars($u['username']) ?></td>
       <td><?= htmlspecialchars($u['email']) ?></td>
       <td><?= htmlspecialchars($u['role']) ?></td>
-      <td><?= $u['created_at'] ?></td>
+<td><?= date('d.m.Y H:i', strtotime($u['created_at'])) ?></td>
     </tr>
     <?php endforeach; ?>
   </table>
@@ -149,7 +193,74 @@ th { background:#5865F2; color:white; }
 
     <?php endforeach; ?>
   </table>
+<br><hr><h2>👥 Zarządzanie użytkownikami</h2>
 
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Użytkownik</th>
+    <th>Email</th>
+    <th>Aktualna rola</th>
+    <th>Zmień na</th>
+  </tr>
+
+  <?php foreach ($users as $u): ?>
+  <tr>
+    <td><?= $u['id'] ?></td>
+    <td><?= htmlspecialchars($u['username']) ?></td>
+    <td><?= htmlspecialchars($u['email']) ?></td>
+    <td><b><?= htmlspecialchars($u['role']) ?></b></td>
+    <td>
+      <?php if ($u['role'] !== 'admin'): ?> <!-- Admina nie zmieniamy! -->
+        <form method="post" style="display:flex; gap:5px;">
+          <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+          <select name="new_role" style="padding:5px; border-radius:6px;">
+            <option value="user" <?= $u['role']=='user'?'selected':'' ?>>User</option>
+            <option value="moderator" <?= $u['role']=='moderator'?'selected':'' ?>>Moderator</option>
+          </select>
+          <button type="submit" name="update_role" style="background:#5865F2; color:white; border:none; border-radius:8px; padding:6px 10px; cursor:pointer;">💾 Zapisz</button>
+        </form>
+      <?php else: ?>
+        <i>Admin – brak zmian</i>
+      <?php endif; ?>
+    </td>
+  </tr>
+  <?php endforeach; ?>
+</table>
+<br><hr>
+<h2>🚨 Zgłoszone komentarze</h2>
+
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Użytkownik</th>
+    <th>Komentarz</th>
+    <th>Produkt</th>
+    <th>Data</th>
+    <th>Akcja</th>
+  </tr>
+
+  <?php foreach ($reported_comments as $c): ?>
+  <tr>
+    <td><?= $c['id'] ?></td>
+    <td><?= htmlspecialchars($c['username']) ?></td>
+    <td><?= nl2br(htmlspecialchars($c['content'])) ?></td>
+    <td><?= htmlspecialchars($c['product_name']) ?></td>
+    <td><?= $c['created_at'] ?></td>
+    <td>
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
+        <button name="delete_comment" style="color:red;">❌ Usuń</button>
+      </form>
+
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
+        <button name="clear_report" style="color:green;">✔ OK</button>
+      </form>
+    </td>
+  </tr>
+  <?php endforeach; ?>
+</table>
   <a href="../../src/logout.php" class="btn">Wyloguj się</a>
 </div>
 <!-- 🔹 Modal szczegółów -->
@@ -166,7 +277,12 @@ th { background:#5865F2; color:white; }
     <h3>🧾 Szczegóły zamówienia</h3>
     <div id="orderDetails" style="margin-top:15px;"></div>
   </div>
+
+  
 </div>
+
+
+
 
 <script>
 document.querySelectorAll('.details-btn').forEach(btn => {

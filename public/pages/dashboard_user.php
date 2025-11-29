@@ -2,6 +2,29 @@
 require_once __DIR__ . '/../../src/auth.php';
 requireLogin();
 $db = getDB();
+// 🗑 USUŃ KOMENTARZ
+if (isset($_POST['delete_comment']) && ($_SESSION['role'] === 'moderator' || $_SESSION['role'] === 'admin')) {
+    $id = (int)$_POST['comment_id'];
+
+    // 🧽 Najpierw usuń odpowiedzi
+    $db->prepare("DELETE FROM comments WHERE parent_id = ?")->execute([$id]);
+
+    // 🗑 Potem usuń główny komentarz
+    $db->prepare("DELETE FROM comments WHERE id = ?")->execute([$id]);
+
+    $_SESSION['msg'] = "🗑 Komentarz i odpowiedzi zostały usunięte!";
+
+    // 💡 ZAWSZE wróć na aktualną stronę:
+    header("Location: " . $_SERVER['PHP_SELF']);
+    exit;
+}
+
+
+// 🧹 OZNACZ JAKO OK
+if (isset($_POST['clear_report']) && $_SESSION['role'] === 'moderator') {
+    $id = (int)$_POST['comment_id'];
+    $db->prepare("UPDATE comments SET reported = 0 WHERE id = ?")->execute([$id]);
+}
 
 $user_id = $_SESSION['user_id'];
 // 🔹 Pobierz zamówienia użytkownika
@@ -29,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo "<script>alert('✅ Dane zaktualizowane pomyślnie!'); window.location='dashboard_user.php';</script>";
     exit;
 }
+$isModerator = ($_SESSION['role'] === 'moderator');
 
 $username = htmlspecialchars($user['username']);
 $email = htmlspecialchars($user['email']);
@@ -89,6 +113,56 @@ form button {
 form button:hover {
   background:#4752c4;
 }
+.comments-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* 🟦 Dymek komentarza */
+.comment-bubble {
+  max-width: 75%;
+  background: #e9e9ff;
+  padding: 10px 14px;
+  border-radius: 12px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  position: relative;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* 📅 Info o autorze */
+.comment-header {
+  font-weight: bold;
+  color: #5865F2;
+}
+
+/* ✏️ Treść komentarza */
+.comment-text {
+  margin-top: 4px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* 🕒 Data */
+.comment-footer {
+  font-size: 0.8em;
+  color: #999;
+  margin-top: 6px;
+}
+
+/* 👤 Styl moderatora/admina – wyróżnienie */
+.comment-admin {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+}
+.comment-moderator {
+  background: #d1f7d6;
+  border-left: 4px solid #27ae60;
+}
+
 </style>
 </head>
 <body>
@@ -152,6 +226,58 @@ form button:hover {
     </tr>
     <?php endforeach; ?>
   </table>
+<?php endif; ?>
+<?php if ($isModerator): ?>
+<br><hr>
+<h2>🚨 Zgłoszone komentarze – do moderacji</h2>
+
+<?php
+$stmt = $db->query("
+    SELECT c.id, c.content, c.created_at, u.username, p.name AS product_name
+    FROM comments c
+    JOIN users u ON c.user_id = u.id
+    JOIN products p ON c.product_id = p.id
+    WHERE c.reported = 1
+    ORDER BY c.created_at DESC
+");
+$reported_comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+?>
+
+<?php if (empty($reported_comments)): ?>
+    <p>Brak zgłoszonych komentarzy 🎉</p>
+<?php else: ?>
+<table>
+  <tr>
+    <th>ID</th>
+    <th>Użytkownik</th>
+    <th>Komentarz</th>
+    <th>Produkt</th>
+    <th>Data</th>
+    <th>Akcja</th>
+  </tr>
+
+  <?php foreach ($reported_comments as $c): ?>
+  <tr>
+    <td><?= $c['id'] ?></td>
+    <td><?= htmlspecialchars($c['username']) ?></td>
+    <td><?= nl2br(htmlspecialchars($c['content'])) ?></td>
+    <td><?= htmlspecialchars($c['product_name']) ?></td>
+    <td><?= $c['created_at'] ?></td>
+    <td>
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
+        <button name="delete_comment" style="color:red;">❌ Usuń</button>
+      </form>
+
+      <form method="post" style="display:inline;">
+        <input type="hidden" name="comment_id" value="<?= $c['id'] ?>">
+        <button name="clear_report" style="color:green;">✔ OK</button>
+      </form>
+    </td>
+  </tr>
+  <?php endforeach; ?>
+</table>
+<?php endif; ?>
 <?php endif; ?>
 
 </div>
