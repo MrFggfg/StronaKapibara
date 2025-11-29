@@ -12,6 +12,73 @@ $product = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$product) {
     die("❌ Produkt nie znaleziony");
 }
+// 🔹 Dodawanie odpowiedzi i komentarzy
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
+    $comment = trim($_POST['comment']);
+    $user_id = $_SESSION['user_id'];
+    $parent_id = $_POST['parent_id'] ?? null; // 🧠 WAŻNE — odpowiedź na komentarz
+
+    if ($comment !== '') {
+        $stmt = $db->prepare("INSERT INTO comments (product_id, user_id, content, parent_id) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$id, $user_id, $comment, $parent_id]);
+    }
+
+    header("Location: product.php?id=" . $id);
+    exit;
+}
+
+// --- Głosowanie ---
+if (isset($_POST['vote_id'])) {
+    $vote_id = (int)$_POST['vote_id'];
+    $user_id = $_SESSION['user_id'];
+
+    // 🔎 Sprawdź autora komentarza
+    $stmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+    $stmt->execute([$vote_id]);
+    $commentOwner = $stmt->fetchColumn();
+
+    if ($commentOwner == $user_id) {
+        $_SESSION['vote_error'] = "❌ Nie możesz głosować na własny komentarz!";
+        header("Location: product.php?id=" . $id);
+        exit;
+    }
+
+    // 🔎 Sprawdź czy już głosował
+    $stmt = $db->prepare("SELECT vote_value FROM comment_votes WHERE comment_id = ? AND user_id = ?");
+    $stmt->execute([$vote_id, $user_id]);
+    $prevVote = $stmt->fetchColumn();
+
+    if ($prevVote !== false) {
+        $_SESSION['vote_error'] = "⚠️ Już głosowałeś na ten komentarz!";
+        header("Location: product.php?id=" . $id);
+        exit;
+    }
+
+    // 🟢 Zapisujemy głos
+    $voteValue = isset($_POST['vote_plus']) ? 1 : -1;
+    $stmt = $db->prepare("INSERT INTO comment_votes (comment_id, user_id, vote_value) VALUES (?, ?, ?)");
+    $stmt->execute([$vote_id, $user_id, $voteValue]);
+
+    // 🔄 Aktualizujemy tabelę komentarzy
+    $stmt = $db->prepare("UPDATE comments SET votes = votes + ? WHERE id = ?");
+    $stmt->execute([$voteValue, $vote_id]);
+
+    header("Location: product.php?id=" . $id);
+    exit;
+}
+
+
+$stmt = $db->prepare("
+    SELECT c.*, u.username
+    FROM comments c
+    JOIN users u ON c.user_id = u.id
+    WHERE c.product_id = ?
+    ORDER BY c.parent_id ASC, c.votes DESC, c.created_at DESC
+");
+$stmt->execute([$id]);
+$comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 ?>
 
 <!DOCTYPE html>
@@ -65,6 +132,46 @@ button:hover { background:#4752c4; }
   color:#5865F2; text-decoration:none; font-weight:bold;
 }
 .back-link:hover { text-decoration:underline; }
+.comment-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.comment-form button {
+    background: #5865F2;
+    color: white;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.comment-box {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.comment-box {
+    background: #f5f5f5;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.comment-form textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.comment-box[reply] {
+    margin-left: 30px;
+    background: #ececec;
+}
 
 </style>
 </head>
@@ -105,6 +212,58 @@ button:hover { background:#4752c4; }
     </div>
 
   </div>
+
+  
+<h3>💬 Komentarze</h3>
+
+<?php if (isset($_SESSION['user_id'])): ?>
+<form method="post" class="comment-form">
+    <textarea name="comment" rows="3" placeholder="Napisz komentarz..." required></textarea>
+    <button type="submit">📩 Dodaj komentarz</button>
+</form>
+<?php else: ?>
+<p><a href="../login.php">Zaloguj się</a>, aby dodać komentarz.</p>
+<?php endif; ?>
+
+<hr>
+
+<?php if (empty($comments)): ?>
+    <p>Brak komentarzy. Bądź pierwszy!</p>
+<?php else: ?>
+    <?php foreach ($comments as $c): ?>
+        <div class="comment-box" style="<?= $c['parent_id'] ? 'margin-left:30px; background:#ececec;' : '' ?>">
+            <p><b><?= htmlspecialchars($c['username']) ?></b> napisał:</p>
+            <p><?= nl2br(htmlspecialchars($c['content'])) ?></p>
+            <small><?= $c['created_at'] ?></small>
+
+            <!-- 🔸 Głosowanie -->
+            <form method="post" style="display:inline;">
+                <input type="hidden" name="vote_id" value="<?= $c['id'] ?>">
+                <button name="vote_plus">👍</button>
+                <button name="vote_minus">👎</button>
+            </form>
+            <span><b><?= $c['votes'] ?></b> punktów</span>
+
+            <!-- 🔸 Odpowiedź -->
+            <details>
+                <summary>💬 Odpowiedz</summary>
+                <form method="post" class="comment-form">
+                    <input type="hidden" name="parent_id" value="<?= $c['id'] ?>">
+                    <textarea name="comment" rows="2" placeholder="Napisz odpowiedź..." required></textarea>
+                    <button type="submit">📩 Wyślij</button>
+                </form>
+            </details>
+        </div>
+        
+        <hr>
+    <?php endforeach; ?>
+    <?php if (!empty($_SESSION['vote_error'])): ?>
+  <p style="color:red;"><b><?= $_SESSION['vote_error'] ?></b></p>
+  <?php unset($_SESSION['vote_error']); ?>
+<?php endif; ?>
+
+<?php endif; ?>
+
 
   <a href="shop.php" class="back-link">⬅️ Wróć do sklepu</a>
 
