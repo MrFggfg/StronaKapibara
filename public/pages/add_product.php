@@ -35,8 +35,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 🔹 Zapis produktu w bazie
-    $stmt = $db->prepare("INSERT INTO products (name, description, price, stock, image) VALUES (?, ?, ?, ?, ?)");
-    $stmt->execute([$name, $description, $price, $stock, $image_name]);
+$category = $_POST['category'];
+
+$stmt = $db->prepare("
+    INSERT INTO products (name, description, price, stock, image, category)
+    VALUES (?, ?, ?, ?, ?, ?)
+");
+$stmt->execute([$name, $description, $price, $stock, $image_name, $category]);
+
 
     header("Location: shop.php");
     exit;
@@ -81,6 +87,12 @@ button:hover { background:#4752c4; }
 
     <label>Dostępna ilość:</label>
     <input type="number" name="stock" required>
+<label>Kategoria:</label>
+<select name="category" required>
+    <option>Ubrania</option>
+    <option>Zabawki</option>
+    <option>Akcesoria</option>
+</select>
 
     <label>Zdjęcie produktu:</label>
     <input type="file" name="image" accept="image/*" required>

@@ -51,7 +51,14 @@ if ($_SESSION['role'] === 'admin' && isset($_POST['delete_product_id'])) {
 }
 
 // 🔹 Pobranie produktów
-$products = $db->query("SELECT * FROM products ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+if (isset($_GET['cat'])) {
+    $cat = $_GET['cat'];
+    $stmt = $db->prepare("SELECT * FROM products WHERE category = ?");
+    $stmt->execute([$cat]);
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $products = $db->query("SELECT * FROM products")->fetchAll(PDO::FETCH_ASSOC);
+}
 ?>
 
 <!DOCTYPE html>
@@ -216,6 +223,24 @@ button:hover { background:#4752c4; }
 .card button:hover {
   background: #4752c4;
 }
+.categories {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.categories a {
+  margin: 5px;
+  padding: 8px 14px;
+  text-decoration: none;
+  background: #eee;
+  border-radius: 6px;
+  color: #333;
+  font-weight: bold;
+  display: inline-block;
+}
+.categories a:hover {
+  background: #ddd;
+}
+
 
 </style>
 </head>
@@ -226,36 +251,56 @@ button:hover { background:#4752c4; }
 
 <div class="container">
   <h2>🛍️ Sklep CapyWorld</h2>
+<div class="categories">
+  <a href="shop.php">Wszystkie</a>
+  <a href="shop.php?cat=Ubrania">Ubrania</a>
+  <a href="shop.php?cat=Zabawki">Zabawki</a>
+  <a href="shop.php?cat=Akcesoria">Akcesoria</a>
+</div>
+<hr>
 
   <div class="products-grid">
     <?php foreach ($products as $p): ?>
       <div class="card">
-        <?php if (!empty($p['image'])): ?>
-          <img src="../uploads/products/<?= htmlspecialchars($p['image']) ?>" alt="<?= htmlspecialchars($p['name']) ?>" style="width:100%; height:200px; object-fit:cover; border-radius:10px 10px 0 0;">
-        <?php endif; ?>
-        <div class="info">
-          <h3><?= htmlspecialchars($p['name']) ?></h3>
-          <p><?= nl2br(htmlspecialchars($p['description'])) ?></p>
-          <p class="price"><?= number_format($p['price'], 2) ?> zł</p>
-          <p><small>Dostępne: <?= (int)$p['stock'] ?> szt.</small></p>
 
-          <?php if ($_SESSION['role'] === 'admin'): ?>
-            <form method="post" style="margin-top:10px;">
-              <input type="hidden" name="delete_product_id" value="<?= $p['id'] ?>">
-              <button class="delete-btn" onclick="return confirm('Na pewno usunąć ten produkt?')">Usuń</button>
-            </form>
-          <?php else: ?>
-            <form method="post" style="margin-top:10px;">
-              <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
-              <input type="number" name="quantity" value="1" min="1" style="width:60px;">
-              <button type="submit" name="add_to_cart">🛒 Dodaj do koszyka</button>
-            </form>
+        <!-- 🔗 KLIKALNA KARTA PRODUKTU -->
+        <a href="product.php?id=<?= $p['id'] ?>" 
+           style="display:block; text-decoration:none; color:inherit;">
+
+          <?php if (!empty($p['image'])): ?>
+            <img src="../uploads/products/<?= htmlspecialchars($p['image']) ?>"
+                 alt="<?= htmlspecialchars($p['name']) ?>"
+                 style="width:100%; height:200px; object-fit:cover; border-radius:10px;">
           <?php endif; ?>
-        </div>
+
+          <div class="info">
+            <h3><?= htmlspecialchars($p['name']) ?></h3>
+            <p><?= nl2br(htmlspecialchars($p['description'])) ?></p>
+            <p class="price"><?= number_format($p['price'], 2) ?> zł</p>
+            <p><small>Dostępne: <?= (int)$p['stock'] ?> szt.</small></p>
+          </div>
+
+        </a> <!-- 🔚 KONIEC LINKU  -->
+
+        <!-- 🛒 FORMULARZ ZOSTAJE POZA LINKIEM! -->
+        <?php if ($_SESSION['role'] === 'admin'): ?>
+          <form method="post" style="margin-top:10px;">
+            <input type="hidden" name="delete_product_id" value="<?= $p['id'] ?>">
+            <button class="delete-btn" onclick="return confirm('Na pewno usunąć ten produkt?')">Usuń</button>
+          </form>
+        <?php else: ?>
+          <form method="post" style="margin-top:10px;">
+            <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
+            <input type="number" name="quantity" value="1" min="1" style="width:60px;">
+            <button type="submit" name="add_to_cart">🛒 Dodaj do koszyka</button>
+          </form>
+        <?php endif; ?>
+
       </div>
     <?php endforeach; ?>
   </div>
 </div>
+
 
 
 </body>
