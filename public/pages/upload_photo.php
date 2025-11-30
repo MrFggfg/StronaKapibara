@@ -4,7 +4,10 @@ requireLogin();
 $db = getDB();
 
 $message = '';
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo'])) {
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
@@ -27,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo'])) {
                     ':d' => $description
                 ]);
                 $message = "✅ Zdjęcie zostało dodane!";
+                addNotification($db, $_SESSION['user_id'], "📸 Twoje zdjęcie '$title' zostało dodane do galerii.");
             } else {
                 $message = "❌ Nie udało się zapisać pliku.";
             }
@@ -37,6 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['photo'])) {
         $message = "❌ Błąd podczas przesyłania pliku.";
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -111,7 +116,9 @@ input, textarea {
     <label>Wybierz zdjęcie:</label>
     <input type="file" name="photo" accept="image/*" required>
     <button class="btn" type="submit">Dodaj</button>
+    
   </form>
+  
   <p><a href="gallery.php">📸 Zobacz galerię</a></p>
 </div>
 </body>

@@ -95,6 +95,7 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <!DOCTYPE html>
 <html lang="pl">
 <head>
+  
 <meta charset="UTF-8">
 <title><?= htmlspecialchars($product['name']) ?></title>
 <style>

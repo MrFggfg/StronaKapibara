@@ -1,9 +1,12 @@
 <?php
 require_once __DIR__ . '/../../src/auth.php';
-
+$db = getDB();
 $message = '';
 $csrf_token = generateCsrfToken();
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf_token'] ?? '')) {
         die("Błąd bezpieczeństwa: CSRF token nieprawidłowy.");
@@ -19,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $result = registerUser($username, $email, $password);
         if ($result === true) {
+             $user_id = $db->lastInsertId();
+            addNotification($db, $_SESSION['user_id'], "🎉 Utworzono konto");
             header("Location: login.php?registered=1");
             exit();
         } else {

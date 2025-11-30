@@ -11,7 +11,10 @@ $orders = $db->query("
     ORDER BY o.created_at DESC
     LIMIT 10
 ")->fetchAll(PDO::FETCH_ASSOC);
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 if (isset($_POST['update_status'])) {
     $order_id = (int)$_POST['order_id'];
     $status = $_POST['status'];
@@ -19,11 +22,20 @@ if (isset($_POST['update_status'])) {
     $stmt = $db->prepare("UPDATE orders SET status = ? WHERE id = ?");
     $stmt->execute([$status, $order_id]);
 
-    // ✅ Zapisz komunikat i odśwież stronę (żeby zapobiec podwójnemu klikaniu)
+    // 🔎 Pobierz user_id do powiadomienia
+    $stmt = $db->prepare("SELECT user_id FROM orders WHERE id = ?");
+    $stmt->execute([$order_id]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
+    $user_id = $order['user_id'];
+
+    // 🔔 Powiadom użytkownika
+    addNotification($db, $user_id, "📦 Status Twojego zamówienia #$order_id zmieniono na **$status**");
+
     $_SESSION['order_message'] = "✅ Zmieniono status zamówienia #$order_id na '$status'";
     header("Location: dashboard_admin.php");
     exit;
 }
+
 // Pobierz użytkowników
 $users = $db->query("SELECT id, username, email, role, created_at FROM users ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -32,13 +44,17 @@ if (isset($_POST['update_role'])) {
     $user_id  = (int)$_POST['user_id'];
     $new_role = $_POST['new_role'];
 
-    if (in_array($new_role, ['user','moderator'])) { // admina nie zmieniamy!
+    if (in_array($new_role, ['user','moderator'])) {
         $stmt = $db->prepare("UPDATE users SET role = ? WHERE id = ?");
         $stmt->execute([$new_role, $user_id]);
+
+        // 🔔 Powiadom użytkownika!
+        addNotification($db, $user_id, "🛡️ Twoja rola została zmieniona na: $new_role");
     }
     header("Location: dashboard_admin.php");
     exit;
 }
+
 // Pobierz zgłoszone komentarze
 $stmt = $db->query("
     SELECT c.id, c.content, c.created_at, u.username, p.name AS product_name
@@ -53,18 +69,51 @@ $reported_comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // 🗑 USUŃ KOMENTARZ
 if (isset($_POST['delete_comment'])) {
     $id = (int)$_POST['comment_id'];
+
+    // pobierz użytkownika komentarza
+    $stmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+    $stmt->execute([$id]);
+    $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($comment) {
+        addNotification($db, $comment['user_id'], "❌ Twój komentarz został usunięty przez moderatora.");
+    }
+
     $db->prepare("DELETE FROM comments WHERE id = ?")->execute([$id]);
     header("Location: dashboard_admin.php");
     exit;
 }
 
+
 // 🧹 WYCZYŚC ZGŁOSZENIE
 if (isset($_POST['clear_report'])) {
     $id = (int)$_POST['comment_id'];
+
+    // pobierz user_id autora komentarza
+    $stmt = $db->prepare("SELECT user_id FROM comments WHERE id = ?");
+    $stmt->execute([$id]);
+    $comment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($comment) {
+        addNotification($db, $comment['user_id'], "✔️ Twój komentarz został sprawdzony i zaakceptowany.");
+    }
+
     $db->prepare("UPDATE comments SET reported = 0 WHERE id = ?")->execute([$id]);
     header("Location: dashboard_admin.php");
     exit;
 }
+
+// pobierz powiadomienia z paginacją
+$limit = 5;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+$offset = ($page - 1) * $limit;
+
+$stmt = $db->prepare("SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?");
+$stmt->bindValue(1, $_SESSION['user_id'], PDO::PARAM_INT);
+$stmt->bindValue(2, $limit, PDO::PARAM_INT);
+$stmt->bindValue(3, $offset, PDO::PARAM_INT);
+$stmt->execute();
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
 
@@ -261,7 +310,21 @@ table th, table td { padding: 10px; border-bottom: 1px solid #ddd; }
   </tr>
   <?php endforeach; ?>
 </table>
-  <a href="../../src/logout.php" class="btn">Wyloguj się</a>
+  <h3>🔔 Twoje powiadomienia</h3>
+
+<?php if (empty($notifications)): ?>
+  <p>Brak powiadomień 😊</p>
+<?php else: ?>
+  <?php foreach ($notifications as $n): ?>
+    <div style="background:#f5f5f5; border-radius:8px; padding:10px; margin-bottom:8px;">
+      <p><?= nl2br(htmlspecialchars($n['message'])) ?></p>
+      <small><?= $n['created_at'] ?></small>
+    </div>
+  <?php endforeach; ?>
+<?php endif; ?>
+<a href="?page=<?= max(1, $page - 1) ?>">⬅️ Poprzednia</a> |
+<a href="?page=<?= $page + 1 ?>">Następna ➡️</a>
+<a href="../../src/logout.php" class="btn">Wyloguj się</a>
 </div>
 <!-- 🔹 Modal szczegółów -->
 <div id="orderModal" style="
@@ -278,7 +341,6 @@ table th, table td { padding: 10px; border-bottom: 1px solid #ddd; }
     <div id="orderDetails" style="margin-top:15px;"></div>
   </div>
 
-  
 </div>
 
 

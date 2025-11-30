@@ -7,7 +7,10 @@ if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'moderator') {
 }
 
 $db = getDB();
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['name']);
     $description = trim($_POST['description']);
@@ -35,18 +38,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // 🔹 Zapis produktu w bazie
-$category = $_POST['category'];
+    $category = $_POST['category'];
 
-$stmt = $db->prepare("
-    INSERT INTO products (name, description, price, stock, image, category)
-    VALUES (?, ?, ?, ?, ?, ?)
-");
-$stmt->execute([$name, $description, $price, $stock, $image_name, $category]);
+    $stmt = $db->prepare("
+        INSERT INTO products (name, description, price, stock, image, category)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ");
+    $stmt->execute([$name, $description, $price, $stock, $image_name, $category]);
 
+    // 🔔 POWIADOMIENIE — tylko jeśli sesja istnieje
+    if (isset($_SESSION['user_id'])) {
+        addNotification($db, $_SESSION['user_id'], "🛒 Nowy produkt '$name' został dodany do sklepu.");
+    }
 
     header("Location: shop.php");
     exit;
 }
+
 ?>
 
 <!DOCTYPE html>

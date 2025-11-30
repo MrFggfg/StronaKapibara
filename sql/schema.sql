@@ -92,3 +92,31 @@ ALTER TABLE products ADD COLUMN image VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD COLUMN address VARCHAR(255) DEFAULT NULL AFTER email;
 ALTER TABLE products ADD category VARCHAR(100) DEFAULT 'Inne';
 CREATE INDEX idx_category ON products(category);
+
+CREATE TABLE comments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+CREATE TABLE comment_votes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    comment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    vote_value INT NOT NULL, 
+    UNIQUE (comment_id, user_id), 
+    FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+ALTER TABLE comments ADD reported TINYINT(1) DEFAULT 0;
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    message TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
