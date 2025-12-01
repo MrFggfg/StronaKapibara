@@ -65,22 +65,14 @@ if (isset($_GET['cat'])) {
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
+
 <title>Sklep CapyWorld</title>
 <style>
-body { font-family: Arial; background:#f0f0f5; margin:0; }
-.navbar {
-  display:flex; justify-content:space-between; align-items:center;
-  background:#5865F2; padding:12px 40px; color:white;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
+
 .navbar .logo { font-weight:bold; font-size:1.2em; }
 .navbar a { color:white; text-decoration:none; margin-left:20px; }
 .navbar a:hover { text-decoration:underline; }
-
-.container {
-  max-width:1000px; margin:80px auto; background:white; padding:30px;
-  border-radius:15px; box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
 
 .products {
   display:grid;

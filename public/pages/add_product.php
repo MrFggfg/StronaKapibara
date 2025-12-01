@@ -61,13 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
+
 <title>Dodaj produkt</title>
 <style>
-body { font-family: Arial; background:#f0f0f5; margin:0; }
-.container {
-  max-width:600px; margin:100px auto; background:white; padding:30px;
-  border-radius:15px; box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
+
 label { display:block; margin-top:15px; font-weight:bold; }
 input, textarea {
   width:100%; padding:10px; margin-top:5px;

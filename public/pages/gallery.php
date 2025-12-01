@@ -48,16 +48,11 @@ $photos = $db->query("
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
+
 <title>Galeria kapibar</title>
 <style>
-body { font-family: Arial; background:#fafafa; margin:0; }
 
-/* Pasek nawigacji */
-.navbar {
-  display:flex; justify-content:space-between; align-items:center;
-  background:#5865F2; padding:12px 40px; color:white;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
 .navbar .logo { font-weight:bold; font-size:1.2em; }
 .navbar a {
   color:white; text-decoration:none; margin-left:20px;
@@ -89,10 +84,7 @@ body { font-family: Arial; background:#fafafa; margin:0; }
 .card h3 { margin:0 0 5px 0; }
 
 /* Galeria */
-.container {
-  max-width: 1000px; margin: 20px auto; background:white; padding: 20px;
-  border-radius: 10px; box-shadow: 0 0 8px rgba(0,0,0,0.1);
-}
+
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));

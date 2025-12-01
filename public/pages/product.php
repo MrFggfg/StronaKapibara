@@ -8,7 +8,10 @@ $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $stmt = $db->prepare("SELECT * FROM products WHERE id = ?");
 $stmt->execute([$id]);
 $product = $stmt->fetch(PDO::FETCH_ASSOC);
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 if (!$product) {
     die("❌ Produkt nie znaleziony");
 }
@@ -19,6 +22,7 @@ if (isset($_POST['report_comment'])) {
     $stmt->execute([$comment_id]);
 
     $_SESSION['msg'] = "🔔 Komentarz został zgłoszony do moderatora.";
+    addNotification($db, $_SESSION['user_id'], "🚨 Twój komentarz został zgłoszony do moderacji.");
     header("Location: product.php?id=" . $id);
     exit;
 }
@@ -35,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['comment'])) {
     }
 
     header("Location: product.php?id=" . $id);
+    addNotification($db, $user_id, "💬 Twój komentarz został dodany do produktu.");
     exit;
 }
 
@@ -97,27 +102,17 @@ $comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <head>
   
 <meta charset="UTF-8">
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
+
 <title><?= htmlspecialchars($product['name']) ?></title>
 <style>
-/* 🔹 Ogólny styl stron */
-body { font-family: Arial; background:#f4f4f4; margin:0; }
 
-/* 🔹 Pasek nawigacji */
-.navbar {
-  display:flex; justify-content:space-between; align-items:center;
-  background:#5865F2; padding:12px 40px; color:white;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
 .navbar a {
   color:white; text-decoration:none; margin-left:20px; font-weight:500;
 }
 .navbar a:hover { text-decoration:underline; }
 
-/* 🔹 Kontener główny */
-.container {
-  max-width: 900px; margin: 80px auto; background: white; padding: 30px;
-  border-radius: 15px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-}
+
 
 /* 🔹 Układ produktu */
 .product-box { display: flex; gap: 30px; flex-wrap: wrap; }

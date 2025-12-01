@@ -6,7 +6,10 @@ $db = getDB();
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
+function addNotification($db, $user_id, $message) {
+    $stmt = $db->prepare("INSERT INTO notifications (user_id, message) VALUES (?, ?)");
+    $stmt->execute([$user_id, $message]);
+}
 // 🔹 Usuń produkt z koszyka
 if (isset($_POST['remove_id'])) {
     $id = (int)$_POST['remove_id'];
@@ -54,6 +57,7 @@ if (isset($_POST['checkout']) && !empty($_SESSION['cart'])) {
     @mail($email, $subject, $message, $headers);
 
     $message = "✅ Zamówienie zostało złożone! Sprawdź e-mail z potwierdzeniem.";
+    addNotification($db, $user_id, "📦 Twoje zamówienie #$order_id zostało złożone.");
 }
 
 ?>
@@ -62,18 +66,13 @@ if (isset($_POST['checkout']) && !empty($_SESSION['cart'])) {
 <html lang="pl">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
+
 <title>Twój koszyk</title>
 <style>
-body { font-family: Arial; background:#f8f8fb; margin:0; }
-.navbar {
-  display:flex; justify-content:space-between; align-items:center;
-  background:#5865F2; padding:12px 40px; color:white;
-}
+
 .navbar a { color:white; text-decoration:none; margin-left:20px; }
-.container {
-  max-width:900px; margin:80px auto; background:white; padding:30px;
-  border-radius:15px; box-shadow:0 0 10px rgba(0,0,0,0.1);
-}
+
 table { width:100%; border-collapse:collapse; }
 th, td { border-bottom:1px solid #ddd; padding:10px; text-align:left; }
 th { background:#f2f2f2; }

@@ -1,7 +1,7 @@
 :root{
-  --primary: #6b4f3b;   /* brąz kapibary */
-  --accent:  #c9b89a;   /* beż */
-  --muted:   #eaf3ef;   /* pastel */
+  --primary: #6b4f3b;  
+  --accent:  #c9b89a;   
+  --muted:   #eaf3ef;   
   --max-w: 1100px;
   --gap: 16px;
 }
@@ -11,13 +11,26 @@ body{
   margin:0;
   font-family: Inter, system-ui, Arial, sans-serif;
   color:#222;
-  background:linear-gradient(180deg,var(--muted),#fff);
+  background:var(--muted);
 }
-
 .container{
   max-width:var(--max-w);
   margin:0 auto;
-  padding:24px;
+  padding:30px;
+  background: var(--accent);
+  border-radius:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.1);
+  justify-content: space-between;
+}
+
+.navbar {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background: var(--primary);
+  padding:12px 40px;
+  color:white;
+  box-shadow:0 2px 8px rgba(0,0,0,0.1);
 }
 
 .site-header{
@@ -173,15 +186,6 @@ body{
   border-left-color: #2d9;
   color: #060;
 }
-.navbar {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  background:#5865F2;
-  padding:12px 40px;
-  color:white;
-  box-shadow:0 2px 8px rgba(0,0,0,0.1);
-}
 
 .navbar .logo {
   font-weight:bold;
@@ -208,4 +212,3 @@ body{
   font-weight:bold;
   box-shadow:0 0 5px rgba(255,255,255,0.5);
 }
-

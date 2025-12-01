@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="utf-8" />
   <title>Rejestracja — CapyWorld</title>
-  <link rel="stylesheet" href="../assets/css/styles.css" />
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
 </head>
 <body>
   <div class="auth-container">

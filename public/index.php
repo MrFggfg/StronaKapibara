@@ -13,7 +13,7 @@ if (isset($_SESSION['user_id'])) {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CapyWorld — strona główna</title>
-  <link rel="stylesheet" href="assets/css/styles.css" />
+<link rel="stylesheet" href="/stronakapibara/public/assets/css/style.css">
 </head>
 <body>
   <header class="site-header">
