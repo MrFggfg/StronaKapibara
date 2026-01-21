@@ -101,6 +101,17 @@ $stmt->execute();
 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 ?>
+<?php if (isset($_GET['paid'])): ?>
+    <div class="message success">
+        ✅ Zamówienie zostało opłacone pomyślnie!
+    </div>
+<?php endif; ?>
+
+<?php if (isset($_GET['error']) && $_GET['error'] === 'not_pending'): ?>
+    <div class="message error">
+        ⚠️ To zamówienie nie oczekuje na płatność
+    </div>
+<?php endif; ?>
 
 <!DOCTYPE html>
 <html lang="pl">
@@ -213,7 +224,20 @@ form button:hover {
       <td><?= $order['created_at'] ?></td>
       <td>
         <button class="details-btn" data-id="<?= $order['id'] ?>" style="background:#5865F2; color:white; border:none; border-radius:8px; padding:6px 12px; cursor:pointer;">Szczegóły</button>
+        <?php if ($order['status'] === 'pending'): ?>
+<form method="get" action="payment_sandbox.php">
+    <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+    <button>💳 Zapłać</button>
+</form>
+
+<?php else: ?>
+    <span style="color:green;font-weight:bold;">✔ Opłacone</span>
+<?php endif; ?>
+
       </td>
+
+
+
     </tr>
     <?php endforeach; ?>
   </table>
