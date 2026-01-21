@@ -50,6 +50,25 @@ function loginUser($username, $password) {
 
     return false;
 }
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['user_id']) && isset($_COOKIE['remember_me'])) {
+    $db = getDB();
+    $token = $_COOKIE['remember_me'];
+
+    $stmt = $db->prepare("SELECT * FROM users WHERE remember_token = ?");
+    $stmt->execute([$token]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['email'] = $user['email'];
+        $_SESSION['role'] = $user['role'];
+    }
+}
 
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {

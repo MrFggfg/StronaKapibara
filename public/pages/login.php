@@ -16,10 +16,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
 
     if (loginUser($username, $password)) {
-        addNotification($db, $_SESSION['user_id'], "zalogowałeś się.");
-        header("Location: dashboard.php");
-        exit();
-    } else {
+
+    // 🔹 Zapamiętaj mnie
+    if (!empty($_POST['remember_me'])) {
+        $token = bin2hex(random_bytes(32));
+
+        $stmt = $db->prepare("UPDATE users SET remember_token = ? WHERE id = ?");
+        $stmt->execute([$token, $_SESSION['user_id']]);
+
+        setcookie(
+            'remember_me',
+            $token,
+            time() + (60 * 60 * 24 * 30), // 30 dni
+            '/',
+            '',
+            false,
+            true // HttpOnly
+        );
+    }
+
+    addNotification($db, $_SESSION['user_id'], "🔑 Zalogowano pomyślnie");
+    header("Location: dashboard.php");
+    exit();
+}
+else {
         $message = "Niepoprawny login lub hasło.";
     }
 }
@@ -52,6 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <label>Hasło</label>
         <input type="password" name="password" required>
+<label style="margin-top:10px; display:block;">
+  <input type="checkbox" name="remember_me"> Zapamiętaj mnie
+</label>
 
         <button type="submit" class="btn">Zaloguj</button>
 <div style="margin-top: 20px;">

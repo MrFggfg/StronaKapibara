@@ -120,3 +120,5 @@ CREATE TABLE notifications (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+ALTER TABLE users ADD remember_token VARCHAR(64) DEFAULT NULL;
+ALTER TABLE users ADD theme VARCHAR(50) DEFAULT 'theme-capybara';

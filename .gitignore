@@ -3,3 +3,4 @@
 /vendor/
 *.log
 .DS_Store
+<script src="/stronakapibara/public/assets/js/theme.js"></script>
