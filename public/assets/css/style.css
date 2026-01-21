@@ -1,10 +1,27 @@
-:root{
-  --primary: #6b4f3b;  
-  --accent:  #c9b89a;   
-  --muted:   #eaf3ef;   
-  --max-w: 1100px;
-  --gap: 16px;
+:root {
+  --primary: #6b4f3b;
+  --accent:  #c9b89a;
+  --muted:   #eaf3ef;
 }
+
+:root.theme-capybara {
+  --primary: #6b4f3b;
+  --accent:  #c9b89a;
+  --muted:   #eaf3ef;
+}
+
+:root.theme-night {
+  --primary: #2c3e50;
+  --accent:  #34495e;
+  --muted:   #090f11;
+}
+
+:root.theme-forest {
+  --primary: #2d6a4f;
+  --accent:  #95d5b2;
+  --muted:   #56c7ec;
+}
+
 
 *{box-sizing:border-box}
 body{
@@ -14,7 +31,7 @@ body{
   background:var(--muted);
 }
 .container{
-  max-width:var(--max-w);
+  max-width:800px;
   margin:0 auto;
   padding:30px;
   background: var(--accent);

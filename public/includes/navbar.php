@@ -1,4 +1,6 @@
 <?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
+<script src="/stronakapibara/public/assets/js/theme.js"></script>
+
 
 <div class="navbar">
   <div class="logo">🐹 CapyWorld</div>

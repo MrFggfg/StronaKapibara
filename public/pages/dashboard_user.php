@@ -165,6 +165,13 @@ form button:hover {
   </div>
 
   <hr>
+  <h3>🎨 Wybierz motyw</h3>
+
+<button onclick="setTheme('theme-capybara')"> Kapibara</button>
+<button onclick="setTheme('theme-night')">🌙 Nocny</button>
+<button onclick="setTheme('theme-forest')">🌲 Leśny</button>
+
+
   <h3>✏️ Edytuj dane profilu</h3>
   <form method="post">
     <label for="email">Adres e-mail:</label>
