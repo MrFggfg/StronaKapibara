@@ -61,6 +61,7 @@ if (isset($_GET['cat'])) {
 }
 ?>
 
+
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -233,6 +234,16 @@ button:hover { background:#4752c4; }
   background: #ddd;
 }
 
+.edit-btn{
+  display:inline-block;
+  margin-top:8px;
+  background:#f39c12;
+  color:white;
+  padding:6px 12px;
+  border-radius:6px;
+  text-decoration:none;
+}
+.edit-btn:hover{ background:#e67e22; }
 
 </style>
 </head>
@@ -280,6 +291,10 @@ button:hover { background:#4752c4; }
             <input type="hidden" name="delete_product_id" value="<?= $p['id'] ?>">
             <button class="delete-btn" onclick="return confirm('Na pewno usunąć ten produkt?')">Usuń</button>
           </form>
+          <?php if ($_SESSION['role'] === 'admin' || $_SESSION['role'] === 'moderator'): ?>
+  <a href="edit_product.php?id=<?= $p['id'] ?>" class="edit-btn">✏️ Edytuj</a>
+<?php endif; ?>
+
         <?php else: ?>
           <form method="post" style="margin-top:10px;">
             <input type="hidden" name="product_id" value="<?= $p['id'] ?>">
