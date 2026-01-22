@@ -18,6 +18,13 @@ if (isset($_POST['assign_category']) && $_SESSION['role'] === 'admin') {
     header("Location: dashboard_admin.php");
     exit;
 }
+$moderators = $db->query("
+    SELECT id, username, email, moderated_category, created_at
+    FROM users
+    WHERE role = 'moderator'
+    ORDER BY id ASC
+")->fetchAll(PDO::FETCH_ASSOC);
+
 $users = $db->query("
     SELECT id, username, email, role, moderated_category, created_at
     FROM users
@@ -322,43 +329,41 @@ table th, table td { padding: 10px; border-bottom: 1px solid #ddd; }
   <?php endforeach; ?>
 </table>
 
-<h2>Przypisz kategorie moderatorom</h2>
+<h2>🛡 Przypisz kategorie moderatorom</h2>
 
 <table>
   <tr>
     <th>ID</th>
     <th>Użytkownik</th>
-    <th>Rola</th>
-    <th>Kategoria moderowana</th>
+    <th>Email</th>
+    <th>Kategoria</th>
     <th>Akcja</th>
   </tr>
 
-<?php foreach ($users as $u): ?>
-  <tr>
-    <td><?= $u['id'] ?></td>
-    <td><?= htmlspecialchars($u['username']) ?></td>
-    <td><?= $u['role'] ?></td>
-    <td><?= $u['moderated_category'] ?? '-' ?></td>
+<?php foreach ($moderators as $u): ?>
+<tr>
+  <td><?= $u['id'] ?></td>
+  <td><?= htmlspecialchars($u['username']) ?></td>
+  <td><?= htmlspecialchars($u['email']) ?></td>
+  <td><?= $u['moderated_category'] ?? '—' ?></td>
+  <td>
+    <form method="post" style="display:flex; gap:6px;">
+      <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
 
-    <td>
-    <?php if ($_SESSION['role'] === 'admin' && $u['role'] === 'moderator'): ?>
-      <form method="post" style="display:flex; gap:6px;">
-        <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
+      <select name="category">
+        <?php $current = $u['moderated_category'] ?? ''; ?>
+        <option value="Ubrania"   <?= $current === 'Ubrania' ? 'selected' : '' ?>>Ubrania</option>
+        <option value="Zabawki"   <?= $current === 'Zabawki' ? 'selected' : '' ?>>Zabawki</option>
+        <option value="Akcesoria" <?= $current === 'Akcesoria' ? 'selected' : '' ?>>Akcesoria</option>
+      </select>
 
-        <select name="category" required>
-          <option value="Ubrania"
-          <?= ($u['moderated_category'] ?? '') === 'Ubrania' ? 'selected' : '' ?>> Ubrania </option>
-          <option value="Zabawki" <?= ($u['moderated_category'] ?? '') === 'Zabawki' ? 'selected' : '' ?>>Zabawki</option>
-          <option value="Akcesoria" <?= ($u['moderated_category'] ?? '') === 'Akcesoria' ? 'selected' : '' ?>>Akcesoria</option>
-        </select>
-
-        <button name="assign_category">💾</button>
-      </form>
-    <?php endif; ?>
-    </td>
-  </tr>
+      <button name="assign_category">💾</button>
+    </form>
+  </td>
+</tr>
 <?php endforeach; ?>
 </table>
+
 
 
   <h3>🔔 Twoje powiadomienia</h3>
