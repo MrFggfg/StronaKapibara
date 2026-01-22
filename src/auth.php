@@ -44,7 +44,12 @@ function loginUser($username, $password) {
         session_regenerate_id(true); // nowy identyfikator po zalogowaniu
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['moderated_category'] = $user['moderated_category'];
+
         $_SESSION['last_activity'] = time();
+
+        $_SESSION['moderated_category'] = $user['moderated_category'];
+
         return true;
     }
 

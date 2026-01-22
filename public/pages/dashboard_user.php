@@ -247,15 +247,20 @@ form button:hover {
 <h2>🚨 Zgłoszone komentarze – do moderacji</h2>
 
 <?php
-$stmt = $db->query("
-    SELECT c.id, c.content, c.created_at, u.username, p.name AS product_name
+$stmt = $db->prepare("
+    SELECT c.id, c.content, c.created_at,
+           u.username, p.name AS product_name
     FROM comments c
     JOIN users u ON c.user_id = u.id
     JOIN products p ON c.product_id = p.id
     WHERE c.reported = 1
+      AND p.category = ?
     ORDER BY c.created_at DESC
 ");
+
+$stmt->execute([$_SESSION['moderated_category']]);
 $reported_comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
 ?>
 
 <?php if (empty($reported_comments)): ?>

@@ -122,3 +122,5 @@ CREATE TABLE notifications (
 );
 ALTER TABLE users ADD remember_token VARCHAR(64) DEFAULT NULL;
 ALTER TABLE users ADD theme VARCHAR(50) DEFAULT 'theme-capybara';
+ALTER TABLE users ADD moderated_category VARCHAR(50) NULL;
+ALTER TABLE products ADD approved TINYINT DEFAULT 0;

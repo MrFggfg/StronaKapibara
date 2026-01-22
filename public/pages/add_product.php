@@ -54,8 +54,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: shop.php");
     exit;
 }
-
 ?>
+
+
+
 
 <!DOCTYPE html>
 <html lang="pl">
@@ -94,11 +96,17 @@ button:hover { background:#4752c4; }
     <label>Dostępna ilość:</label>
     <input type="number" name="stock" required>
 <label>Kategoria:</label>
+<?php if ($_SESSION['role'] === 'admin'): ?>
 <select name="category" required>
-    <option>Ubrania</option>
-    <option>Zabawki</option>
-    <option>Akcesoria</option>
+  <option>Ubrania</option>
+  <option>Zabawki</option>
+  <option>Akcesoria</option>
 </select>
+
+<?php elseif ($_SESSION['role'] === 'moderator'): ?>
+<input type="hidden" name="category" value="<?= $_SESSION['moderated_category'] ?>">
+<p><b>Kategoria:</b> <?= $_SESSION['moderated_category'] ?></p>
+<?php endif; ?>
 
     <label>Zdjęcie produktu:</label>
     <input type="file" name="image" accept="image/*" required>
